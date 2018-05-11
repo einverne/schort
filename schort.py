@@ -93,6 +93,8 @@ def init_db():
     conn.close()
 
 
+init_db()
+
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)  # If you call this file directly it will always run in debug mode. THIS IS VERY DANGEROUS!
