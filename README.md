@@ -6,12 +6,19 @@
 
 ## 安装使用
 
-1. Clone this repo into e.g. /opt/schort
-2. Create a user and adjust permissions to write at least into /opt/schort/data
-2. Install requirements (see below)
-3. Configure your wsgi or fcgi server
-4. Configure your webserver that he talks to your wsgi/fcgi server
+### 源码
 
+    pip install -r requirements.txt
+    flask db upgrade
+    ./run.sh
+
+### Docker
+
+    sudo docker built -t schort .
+    sudo docker run --name schort -p 4000:4000 schort
+
+## 原理
+取了原始链接的url safe BASE64
 
 ## Requirements:
 
