@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 from urllib.parse import urlparse
 
-from flask import Flask, render_template, request, redirect, abort, escape, jsonify
-from flask import g
+from flask import render_template, request, redirect, abort, escape, jsonify
 
-from basic_resp import BasicResp
-from dbutils import init_db, get_long_link, insert_id_unique
+from app import app
+from app.basic_resp import BasicResp
+from app.dbutils import get_long_link, insert_id_unique
+from app.logger import get_logger
 
-app = Flask(__name__)
+logger = get_logger(__file__)
 
 
 @app.route('/', methods=['GET', 'POST', 'HEAD'])
@@ -19,8 +20,9 @@ def short(short_link=""):
             if no_auto:
                 short_link = short_link[:-1]
             result = get_long_link(short_link)
-            if result:
-                url = result[0]
+            logger.info("get long link {}".format(result))
+            if result != "":
+                url = result
                 parsed_url = urlparse(url)
                 if parsed_url.scheme == "":
                     url = "http://" + url
@@ -41,35 +43,20 @@ def short(short_link=""):
             return render_template("index.html", name=short_link)  # Landing page
     elif request.method == "POST":  # Someone submitted a new link to short
         long_url = request.form["url"]  # required, accept the exception if the key does not exist
-        custom_id = request.form.get("customId")
+        custom_id = request.form.get("customId")  # 自定义短域名
         if len(long_url) <= 0:
             abort(400)
         if custom_id is not None and len(custom_id) > 0:
             origin_url = get_long_link(custom_id)
-            if long_url == origin_url[0]:
-                database_id = custom_id
-                resp = BasicResp('success', request.url_root + database_id)
-                return jsonify(resp.__dict__)  # Short link in plain text
-            else:
-                resp = BasicResp(-1, 'error, customId exist', origin_url[0])
+            if long_url != origin_url and origin_url != '':
+                resp = BasicResp(-1, 'error, customId exist', origin_url)
                 return jsonify(resp.__dict__)
         database_id = insert_id_unique(long_url, custom_id, request.remote_addr)
         resp = BasicResp('success', request.url_root + database_id)
         return jsonify(resp.__dict__)  # Short link in plain text
 
 
-init_db()
-
-
-@app.teardown_appcontext
-def close_conn(exception):
-    db = getattr(g, '_database', None)
-    if db is not None:
-        db.close()
-
-
 if __name__ == '__main__':
-    init_db()
-    app.run(debug=True)  # If you call this file directly it will always run in debug mode. THIS IS VERY DANGEROUS!
-
-# vim: noexpandtab:ts=2:sw=2:sts=2
+    app.run(debug=True,
+            host='0.0.0.0',
+            port=4000)  # If you call this file directly it will always run in debug mode. THIS IS VERY DANGEROUS!

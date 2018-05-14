@@ -3,7 +3,7 @@
 import json
 
 
-class BasicResp:
+class BasicResp(object):
     code = 0  # 返回错误码
     msg = ''  # 信息
     data = ''  # 数据
